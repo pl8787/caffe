@@ -335,7 +335,7 @@ SUPERCLEAN_EXTS := .so .a .o .bin .testbin .pb.cc .pb.h _pb2.py .cuo
 # Define build targets
 ##############################
 .PHONY: all test clean docs linecount lint lintclean tools examples $(DIST_ALIASES) \
-	py mat py$(PROJECT) mat$(PROJECT) proto runtest \
+	py mat py$(PROJECT) mat$(PROJECT) proto runtest runtestone\
 	superclean supercleanlist supercleanfiles warn everything
 
 all: $(NAME) $(STATIC_NAME) tools examples
@@ -411,6 +411,8 @@ $(MAT$(PROJECT)_SO): $(MAT$(PROJECT)_SRC) $(STATIC_NAME)
 runtest: $(TEST_ALL_BIN)
 	$(TEST_ALL_BIN) $(TEST_GPUID) --gtest_shuffle $(TEST_FILTER)
 
+runtestone: $(TEST_ALL_BIN)
+	$(TEST_ALL_BIN) $(TEST_GPUID) --gtest_filter="PReLULayerTest*" 
 warn: $(EMPTY_WARN_REPORT)
 
 $(EMPTY_WARN_REPORT): $(ALL_WARNS) | $(BUILD_DIR)

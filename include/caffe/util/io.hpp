@@ -94,7 +94,7 @@ bool ReadImageToDatum(const string& filename, const int label,
 
 inline bool ReadImageToDatum(const string& filename, const int label,
     const int height, const int width, Datum* datum) {
-  return ReadImageToDatum(filename, label, height, width, true, datum);
+  return ReadImageToDatum(filename, label, height, width, false, datum);
 }
 
 inline bool ReadImageToDatum(const string& filename, const int label,

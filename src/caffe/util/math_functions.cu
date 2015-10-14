@@ -119,6 +119,22 @@ void caffe_gpu_dot<double>(const int n, const double* x, const double* y,
 }
 
 template <>
+void caffe_gpu_dot_gpu<float>(const int n, const float* x, const float* y,
+    float* out) {
+  cublasSetPointerMode(Caffe::cublas_handle(), CUBLAS_POINTER_MODE_DEVICE);
+  CUBLAS_CHECK(cublasSdot(Caffe::cublas_handle(), n, x, 1, y, 1, out));
+  cublasSetPointerMode(Caffe::cublas_handle(), CUBLAS_POINTER_MODE_HOST);
+}
+
+template <>
+void caffe_gpu_dot_gpu<double>(const int n, const double* x, const double* y,
+    double * out) {
+  cublasSetPointerMode(Caffe::cublas_handle(), CUBLAS_POINTER_MODE_DEVICE);
+  CUBLAS_CHECK(cublasDdot(Caffe::cublas_handle(), n, x, 1, y, 1, out));
+  cublasSetPointerMode(Caffe::cublas_handle(), CUBLAS_POINTER_MODE_HOST);
+}
+
+template <>
 void caffe_gpu_asum<float>(const int n, const float* x, float* y) {
   CUBLAS_CHECK(cublasSasum(Caffe::cublas_handle(), n, x, 1, y));
 }

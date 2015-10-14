@@ -231,6 +231,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return GetPoolingLayer<Dtype>(name, param);
   case LayerParameter_LayerType_POWER:
     return new PowerLayer<Dtype>(param);
+  case LayerParameter_LayerType_PRELU:
+	return new PReLULayer<Dtype>(param);
   case LayerParameter_LayerType_RELU:
     return GetReLULayer<Dtype>(name, param);
   case LayerParameter_LayerType_SILENCE:
@@ -245,6 +247,8 @@ Layer<Dtype>* GetLayer(const LayerParameter& param) {
     return GetSoftmaxLayer<Dtype>(name, param);
   case LayerParameter_LayerType_SOFTMAX_LOSS:
     return new SoftmaxWithLossLayer<Dtype>(param);
+  case LayerParameter_LayerType_SOFTMAX2_LOSS:
+	return new Softmax2WithLossLayer<Dtype>(param);
   case LayerParameter_LayerType_SPLIT:
     return new SplitLayer<Dtype>(param);
   case LayerParameter_LayerType_TANH:

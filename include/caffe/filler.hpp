@@ -157,6 +157,53 @@ class XavierFiller : public Filler<Dtype> {
   }
 };
 
+/**
+ * @brief Fills a Blob with values @f$ x \sim U(-a, +a) @f$ where @f$ a @f$
+ *        is set inversely proportional to the number of incoming nodes.
+ *
+ * A Filler based on the paper [Bengio and Glorot 2010]: Understanding
+ * the difficulty of training deep feedforward neuralnetworks, but does not
+ * use the fan_out value.
+ *
+ * It fills the incoming matrix by randomly sampling uniform data from
+ * [-scale, scale] where scale = sqrt(3 / fan_in) where fan_in is the number
+ * of input nodes. You should make sure the input blob has shape (num, a, b, c)
+ * where a * b * c = fan_in.
+ *
+ * TODO(dox): make notation in above comment consistent with rest & use LaTeX.
+ */
+template <typename Dtype>
+class MSRAFiller : public Filler<Dtype> {
+ public:
+  explicit MSRAFiller(const FillerParameter& param)
+      : Filler<Dtype>(param) {}
+  virtual void Fill(Blob<Dtype>* blob) {
+    CHECK(blob->count());
+    int fan_in = blob->count() / blob->num();
+    Dtype a = this->filler_param_.a();
+    Dtype scale = sqrt(Dtype(2) / fan_in / (1 + a*a));
+    caffe_rng_gaussian<Dtype>(blob->count(), (Dtype)0.,
+        scale, blob->mutable_cpu_data());
+    CHECK_EQ(this->filler_param_.sparse(), -1)
+         << "Sparsity not supported by this Filler.";
+  }
+};
+
+template <typename Dtype>
+class HeFiller : public Filler<Dtype> {
+ public:
+  explicit HeFiller(const FillerParameter& param)
+      : Filler<Dtype>(param) {}
+  virtual void Fill(Blob<Dtype>* blob) {
+    CHECK(blob->count());
+    int fan_in = blob->count() / blob->num();
+    Dtype std = sqrt(Dtype(2) / fan_in);
+        caffe_rng_gaussian<Dtype>(blob->count(), 0, std,
+                blob->mutable_cpu_data());
+    CHECK_EQ(this->filler_param_.sparse(), -1)
+         << "Sparsity not supported by this Filler.";
+  }
+};
 
 /**
  * @brief Get a specific filler from the specification given in FillerParameter.
@@ -177,7 +224,11 @@ Filler<Dtype>* GetFiller(const FillerParameter& param) {
     return new UniformFiller<Dtype>(param);
   } else if (type == "xavier") {
     return new XavierFiller<Dtype>(param);
-  } else {
+  } else if (type == "msra") {
+    return new MSRAFiller<Dtype>(param);	  
+  } else if (type == "he") {
+    return new HeFiller<Dtype>(param);	  
+  }else {
     CHECK(false) << "Unknown filler name: " << param.type();
   }
   return (Filler<Dtype>*)(NULL);

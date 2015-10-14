@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
 # This script converts the cifar data into leveldb format.
 
+ROOT=/home/pangliang/caffe
+
+cd $ROOT
+
 EXAMPLE=examples/cifar10
 DATA=data/cifar10
 

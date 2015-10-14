@@ -39,6 +39,7 @@ message FillerParameter {
   // The expected number of non-zero input weights for a given output in
   // Gaussian filler -- the default -1 means don't perform sparsification.
   optional int32 sparse = 7 [default = -1];
+  optional float a = 8 [default = 0.0];
 }
 
 message NetParameter {
@@ -146,10 +147,13 @@ message SolverParameter {
     SGD = 0;
     NESTEROV = 1;
     ADAGRAD = 2;
+	ADAM = 3;
   }
   optional SolverType solver_type = 30 [default = SGD];
   // numerical stability for AdaGrad
   optional float delta = 31 [default = 1e-8];
+  optional float beta1 = 35 [default = 0.1];
+  optional float beta2 = 36 [default = 0.001];
 
   // If true, print information about the state of the net that may help with
   // debugging learning problems.
@@ -157,6 +161,10 @@ message SolverParameter {
 
   // If false, don't save a snapshot after training finishes.
   optional bool snapshot_after_train = 28 [default = true];
+  
+  // Output result
+  optional string result_blob_name = 33 [default = ""];
+  optional string result_file_name = 34 [default = ""];
 }
 
 // A message that stores the solver snapshots
@@ -251,12 +259,14 @@ message LayerParameter {
     MVN = 34;
     POOLING = 17;
     POWER = 26;
+	PRELU = 39;
     RELU = 18;
     SIGMOID = 19;
     SIGMOID_CROSS_ENTROPY_LOSS = 27;
     SILENCE = 36;
     SOFTMAX = 20;
     SOFTMAX_LOSS = 21;
+	SOFTMAX2_LOSS = 38;
     SPLIT = 22;
     SLICE = 33;
     TANH = 23;
@@ -310,9 +320,11 @@ message LayerParameter {
   optional MVNParameter mvn_param = 34;
   optional PoolingParameter pooling_param = 19;
   optional PowerParameter power_param = 21;
+  optional PReLUParameter prelu_param = 42;
   optional ReLUParameter relu_param = 30;
   optional SigmoidParameter sigmoid_param = 38;
   optional SoftmaxParameter softmax_param = 39;
+  optional Softmax2LossParameter softmax2loss_param = 41;
   optional SliceParameter slice_param = 31;
   optional TanHParameter tanh_param = 37;
   optional ThresholdParameter threshold_param = 25;
@@ -332,6 +344,13 @@ message LayerParameter {
   optional V0LayerParameter layer = 1;
 }
 
+// Message that stores parameters used to apply softmax2loss
+message Softmax2LossParameter {
+  optional string top_level = 1 [default = ""];
+  optional uint32 top_cate = 2 [default = 1];
+  optional float lambda = 3 [default = 1.0];
+}
+
 // Message that stores parameters used to apply transformation
 // to the data layer's data
 message TransformationParameter {
@@ -344,6 +363,9 @@ message TransformationParameter {
   // Specify if we would like to randomly crop an image.
   optional uint32 crop_size = 3 [default = 0];
   optional string mean_file = 4;
+  optional uint32 rotate = 5 [default = 0];
+  optional bool intensity = 6 [default = false];
+  optional float background = 7 [default = 0];
 }
 
 // Message that stores parameters used by AccuracyLayer
@@ -522,6 +544,7 @@ message ImageDataParameter {
   // DEPRECATED. See TransformationParameter. Specify if we want to randomly mirror
   // data.
   optional bool mirror = 6 [default = false];
+  optional bool is_color = 11 [default = false];
 }
 
 // Message that stores parameters InfogainLossLayer
@@ -616,6 +639,16 @@ message ReLUParameter {
     CUDNN = 2;
   }
   optional Engine engine = 2 [default = DEFAULT];
+}
+
+// Message that stores parameters used by Parameter ReLULayer
+message PReLUParameter {
+  enum ReLUMode {
+    SHARE = 0;
+	CWISE = 1;
+  }
+  optional ReLUMode mode = 1 [default = SHARE];
+  optional FillerParameter weight_filler = 2; 
 }
 
 // Message that stores parameters used by SigmoidLayer

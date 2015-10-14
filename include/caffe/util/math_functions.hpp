@@ -231,6 +231,9 @@ template <typename Dtype>
 void caffe_gpu_dot(const int n, const Dtype* x, const Dtype* y, Dtype* out);
 
 template <typename Dtype>
+void caffe_gpu_dot_gpu(const int n, const Dtype* x, const Dtype* y, Dtype* out);
+
+template <typename Dtype>
 uint32_t caffe_gpu_hamming_distance(const int n, const Dtype* x,
                                     const Dtype* y);
 

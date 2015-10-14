@@ -1,8 +1,11 @@
 #include <string>
+#include <stdio.h>
 
 #include "caffe/data_transformer.hpp"
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/rng.hpp"
+
+#define PI 3.1415926
 
 namespace caffe {
 
@@ -20,6 +23,9 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   const int crop_size = param_.crop_size();
   const bool mirror = param_.mirror();
   const Dtype scale = param_.scale();
+  const int rotate = param_.rotate();
+  const bool intensity = param_.intensity();
+  const Dtype background = param_.background();
 
   if (mirror && crop_size == 0) {
     LOG(FATAL) << "Current implementation requires mirror and crop_size to be "
@@ -37,7 +43,10 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
       h_off = (height - crop_size) / 2;
       w_off = (width - crop_size) / 2;
     }
-    if (mirror && Rand() % 2) {
+
+    int trans_type = Rand() % 4;
+
+    if (mirror && trans_type==1) {
       // Copy mirrored version
       for (int c = 0; c < channels; ++c) {
         for (int h = 0; h < crop_size; ++h) {
@@ -52,6 +61,49 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
           }
         }
       }
+    } else if (rotate && trans_type==2) {
+      // Copy rotate version
+      int r = Rand() % rotate + 1;
+      Dtype angle = 2 * PI / (rotate+1) * r;
+      for (int c = 0; c < channels; ++c) {
+        for (int h = 0; h < crop_size; ++h) {
+          for (int w = 0; w < crop_size; ++w) {
+            int crop_size2 = crop_size/2;
+            int dh = (h-crop_size2)*sin(angle) + (w-crop_size2)*cos(angle) + h_off + crop_size2;
+            int dw = (h-crop_size2)*cos(angle) - (w-crop_size2)*sin(angle) + w_off + crop_size2;
+            int data_index = 0;
+            int top_index = ((batch_item_id * channels + c) * crop_size + h)
+                * crop_size + w;
+            if (dh >= 0 && dh < height && dw >= 0 && dw < width) {
+              data_index = (c * height + dh) * width + dw;
+              Dtype datum_element =
+                  static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
+              transformed_data[top_index] =
+                  (datum_element - mean[data_index]) * scale;
+            } else {
+              transformed_data[top_index] = background * scale;
+            }
+          }
+        }
+      }
+
+    } else if (intensity && trans_type==3) {
+      // Copy intensity version
+      for (int c = 0; c < channels; ++c) {
+        for (int h = 0; h < crop_size; ++h) {
+          for (int w = 0; w < crop_size; ++w) {
+            int data_index = (c * height + h + h_off) * width + w + w_off;
+            int top_index = ((batch_item_id * channels + c) * crop_size + h)
+                * crop_size + w;
+            Dtype datum_element =
+                static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
+            datum_element = datum_element>128 ? 255 : 0;
+            transformed_data[top_index] =
+                (datum_element - mean[data_index]) * scale;
+          }
+        }
+      }
+ 
     } else {
       // Normal copy
       for (int c = 0; c < channels; ++c) {
@@ -68,6 +120,22 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
         }
       }
     }
+#if 0 
+  char img_name[100];
+  sprintf(img_name, "sample_img/%d.data", batch_item_id);
+  FILE * fout = fopen(img_name, "w");
+  for (int c = 0; c < channels; ++c) {
+    for (int h = 0; h < crop_size; ++h) {
+      for (int w = 0; w < crop_size; ++w) {
+        int top_index = ((batch_item_id * channels + c) * crop_size + h)
+            * crop_size + w;
+        fprintf(fout, "%f ", transformed_data[top_index]);
+      }
+    }
+  }
+  fclose(fout);
+  printf("write ok! %d \n", batch_item_id);
+#endif
   } else {
     // we will prefer to use data() first, and then try float_data()
     if (data.size()) {

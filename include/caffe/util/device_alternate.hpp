@@ -90,9 +90,15 @@ const char* curandGetErrorString(curandStatus_t error);
     const int CAFFE_CUDA_NUM_THREADS = 512;
 #endif
 
+const int CAFFE_CUDA_MAX_NUM_BLOCKS = 65535; 
+
 // CUDA: number of blocks for threads.
 inline int CAFFE_GET_BLOCKS(const int N) {
-  return (N + CAFFE_CUDA_NUM_THREADS - 1) / CAFFE_CUDA_NUM_THREADS;
+  int num_blocks = (N + CAFFE_CUDA_NUM_THREADS - 1) / CAFFE_CUDA_NUM_THREADS;
+  if (num_blocks > CAFFE_CUDA_MAX_NUM_BLOCKS)
+    return CAFFE_CUDA_MAX_NUM_BLOCKS;
+  else 
+    return num_blocks;
 }
 
 }  // namespace caffe
